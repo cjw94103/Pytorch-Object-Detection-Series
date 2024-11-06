@@ -42,8 +42,10 @@ annotations 폴더에는 train_annotations.json, val_annotations.json 파일을 
 ```python
 $ python train.py --[args]
 ```
+
 # 4. Inference
-학습이 완료되면 Inference.ipynb를 참고하여 추론을 수행하고 결과를 시각화할 수 있습니다.
+학습이 완료되면 inference.py를 이용하여 추론을 수행할 수 있습니다.
+
 # 5. 학습 결과
 ## Quantitative Evaluation
 모델은 Box Score와 Mask Score를 측정합니다. 현재 시점 (2024/06/05)에는 Mask Score를 구현하지 못하였습니다. (추후 구현 예정) 따라서 Box Score를 AP@IOU 0.50:0.95, AP@IOU 0.50, AP@IOU 0.75로 측정합니다.
