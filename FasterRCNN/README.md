@@ -20,6 +20,7 @@ Box의 좌표에 대한 regression을 수행하기 위하여 1x1 convolution을 
 
 ROI Pooling의 목적은 size가 다른 region proposal을 FC layer의 입력으로 사용하기 위해 fixed size의 feature로 만들기 위하여 사용됩니다.
 Faster RCNN에서 사용한 ROI Pooling은 Fast RCNN에서 사용한 방법과 동일하며 사전 정의된 size의 grid를 이용하여 grid의 bin안에 들어가는 값 사이에 max pooling을 수행하여 fixed size의 feature vector를 만듭니다.
+
 # 2. Dataset Preparation
 데이터셋은 coco2017을 사용합니다. 아래의 명령어를 이용하여 데이터셋을 다운로드 해주세요.
 ```python
@@ -39,21 +40,15 @@ $ wget http://images.cocodataset.org/annotations/image_info_test2017.zip
     └── val
 ```
 annotations 폴더에는 train_annotations.json, val_annotations.json 파일을 위치시켜주세요. train, val 폴더에는 학습에 사용 할 이미지 파일이 있습니다.
+
 # 3. Train
-먼저 config.json 파일을 만들어야 합니다. make_config.ipynb 파일을 참고하여 config 파일을 만들어주세요. 학습 구현은 train.py, train_aug.py(data augmentation 사용)의 두 가지가 있습니다. 
-모든 경우에 data augmentation을 사용하는 것이 성능이 더 좋습니다. (augmentation 방법을 변경하면 더 좋을수 있습니다.)
-data augmentation의 사용을 원하지 않는 경우 train.py, 사용을 원하는 경우 train_aug.py을 실행시켜주세요.
-학습 또는 추론에 사용 할 특정 GPU의 선택을 원하지 않는 경우 코드에서 os.environ["CUDA_VISIBLE_DEVICES"]="1"를 주석처리 해주세요.
-- data augmentation을 사용하지 않는 경우 아래와 같이 명령어를 실행시켜주세요.
+- 아래와 같은 명령어를 실행해주세요. args에 대한 자세한 내용은 코드를 참고해주세요
 ```python
-$ python train.py --config_path /path/your/config_path
-```
-- data augmentation을 사용할 경우 아래와 같이 명령어를 실행시켜주세요.
-```python
-$ python train_aug.py --config_path /path/your/config_path
+$ python train.py --[args]
 ```
 # 4. Inference and Evaluation
-학습이 완료되면 inference_and_evaluation.ipynb 또는 inference_and_evaluation_Aug.ipynb를 참고하여 추론 및 평가를 수행할 수 있습니다.
+학습이 완료되면 inference.py를 이용하여 추론을 수행할 수 있습니다.
+
 # 5. 학습결과
 ## Quantitative Evaluation
 각 모델은 validation dataset에 대하여 AP@IOU 0.50:0.95, AP@IOU 0.50, AP@IOU 0.75을 정량적 평가 메트릭으로 사용합니다.
