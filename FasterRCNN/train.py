@@ -11,10 +11,13 @@ from coco_dataset import COCODataset
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch import optim
+from transform_utils import PILToTensor, ToDtype, Compose, RandomHorizontalFlip, RandomPhotometricDistort
 
 from tqdm import tqdm
 from utils import *
 from train_func import train
+
+## argparse
 
 # Define a custom argument type for a list of integers
 def list_of_ints(arg):
@@ -27,16 +30,17 @@ def list_of_floats(arg):
 parser = argparse.ArgumentParser()
 
 ## prepare dataset
-parser.add_argument("--data_path", type=str, help="your custom dataset path", default="./data/coco2017/")
+parser.add_argument("--data_path", type=str, help="your custom dataset path", default="/data/02_COCOData/")
 
 ## data generator
 parser.add_argument("--num_workers", type=int, help="num workers of generator", default=0)
-parser.add_argument("--batch_size", type=int, help="num of batch size", default=4)
+parser.add_argument("--batch_size", type=int, help="num of batch size", default=8)
+parser.add_argument("--aug_flag", action='store_false', help="Whether to use data augmentation, True recommended")
 
 ## model architecture
-parser.add_argument("--backbone", type=str, help="backbone of faster rcnn", default='vgg16')
-parser.add_argument('--anchor_sizes', type=list_of_ints, help="anchor size of faster rcnn", default="1, 2, 3, 4, 5, 6")
-parser.add_argument('--anchor_ratio', type=list_of_floats, help="anchor aspect ratio of faster rcnn", default="0.5, 1, 2")
+parser.add_argument("--backbone", type=str, help="backbone of faster rcnn", default='resnet50fpn')
+parser.add_argument('--anchor_sizes', type=list_of_ints, help="anchor size of faster rcnn", default="32, 64, 128, 256, 512")
+parser.add_argument('--anchor_ratio', type=list_of_floats, help="anchor aspect ratio of faster rcnn", default="0.5, 1.0, 2.0")
 parser.add_argument('--pooler_output_size', type=list_of_ints, help="pooler output size of faster rcnn", default="7, 7")
 parser.add_argument("--pooler_sampling_ratio", type=int, help="pooler sampling ratio", default=2)
 
@@ -45,16 +49,16 @@ parser.add_argument("--epochs", type=int, help="num epochs", default=20)
 
 ## Model save
 parser.add_argument("--monitor", type=str, help="Criteria of Best model save", default="loss")
-parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/02_Aug_VGG_Backbone/Augment_VGG_model.pth")
+parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/ResNet50FPN_backbone/FasterRCNN_ResNet50FPN.pth")
 
 ## Optimizer parameter
-parser.add_argument("--weight_decay", type=float, help="weight decay SGD Optimizer", default=0.0005)
-parser.add_argument("--momentum", type=float, help="momentum SGD Optimizer", default=0.9)
+parser.add_argument("--weight_decay", type=float, help="weight decay of Optimizer", default=0.0005)
 parser.add_argument("--lr", type=float, help="learning rate", default=0.001)
+parser.add_argument("--max_norm", type=float, help="max norm of gradient clipping", default=5)
 
 args = parser.parse_args()
 
-# dataloader
+## make dataloader
 def collator(batch):
     return tuple(zip(*batch))
 
@@ -74,10 +78,10 @@ if args.aug_flag==True:
         ]
     )
 elif args.aug_flag==False:
-    train_transform = transforms.Compose(
+    train_transform = Compose(
         [
-            transforms.PILToTensor(),
-            transforms.ConvertImageDtype(dtype=torch.float)
+            PILToTensor(),
+            ToDtype(scale=True, dtype=torch.float)
         ]
     )
     val_transform = train_transform
@@ -92,7 +96,7 @@ val_dataloader = DataLoader(
     val_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True, collate_fn=collator, num_workers=args.num_workers
 )
 
-# Model
+## make model instance
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 if args.backbone == 'vgg16':
@@ -109,10 +113,11 @@ if args.backbone == 'vgg16':
     
 elif args.backbone == 'resnet50fpn':
     backbone = resnet_fpn_backbone('resnet50', pretrained=True)
-    model = FasterRCNN(backbone, num_classes=len(train_dataset._get_categories())).to('cuda')
+    model = FasterRCNN(backbone, num_classes=len(train_dataset._get_categories())).to(device)
 
+## get optimizer
 params = [p for p in model.parameters() if p.requires_grad]
-optimizer = optim.SGD(params, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+optimizer = optim.Adam(params, lr=args.lr, weight_decay=args.weight_decay)
 
-# train
+## Train!!
 train(args, model, train_dataloader, val_dataloader, optimizer)
