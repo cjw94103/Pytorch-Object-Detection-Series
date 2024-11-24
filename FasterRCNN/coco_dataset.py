@@ -8,11 +8,10 @@ from torch.utils.data import Dataset
 class COCODataset(Dataset):
     def __init__(self, root, train, transform=None):
         super().__init__()
-        self.directory = "train" if train else "val"
-        annotations = os.path.join(root, "annotations", f"{self.directory}_annotations.json")
-        
+        self.directory = "train2017" if train else "val2017"
+        annotations = os.path.join(root, "annotations", f"instances_{self.directory}.json")
+
         self.coco = COCO(annotations)
-        # self.id_list = 
         self.root = root
         self.transform = transform
         self.categories = self._get_categories()
@@ -29,7 +28,7 @@ class COCODataset(Dataset):
             if len(ids) != 0:
                 self.id_list.append(img_id)
 
-        # bbox 에러나는 idx 제외 (명시적으로 제거)
+        # explicit exception of error of bbox index
         if self.directory == 'train':
             del self.id_list[self.id_list.index(200365)]
             del self.id_list[self.id_list.index(550395)]
@@ -64,8 +63,9 @@ class COCODataset(Dataset):
                  }
         # img, box augmentation (val의 경우 transform 다르게 설정)
         image, target = self.transform(image, target)
+        image_id = target['image_id']
         
-        return image, target
+        return image, target, image_id
 
     def __len__(self):
         return len(self.id_list)
