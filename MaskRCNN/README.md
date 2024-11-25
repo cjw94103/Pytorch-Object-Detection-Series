@@ -1,15 +1,16 @@
 # 1. Introduction
 ## Overview
-<img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fcx1zeb%2FbtqWX5EbBpp%2FSDi2o1RDnpCCs2ckVpA8d0%2Fimg.png" width="100%" height="100%" align="center">
+
+<img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fcx1zeb%2FbtqWX5EbBpp%2FSDi2o1RDnpCCs2ckVpA8d0%2Fimg.png" width="70%" height="70%" align="center">
 
 Faster RCNN은 Backbone CNN에서 얻은 Feature map을 RPN (Region Proposal Network)에 입력하여 RoI (Region of Interest)를 얻고 RoI Pooling을 통해 Fixed size의 Feature map을 얻고 이를 Fully Connected Layer에 통과시켜 Objection classification, BBox regression을 수행합니다. Mask RCNN은 
 Segmentation을 위해 Mask Branch가 추가된 구조 입니다.위의 그림과 같이 RoI Pooling을 통해 얻은 Feature map을 Mask branch에 입력하여 Segmentation mask를 얻습니다. Objection Detection에 비해 Segmentation은 Pixel 단위의 Prediction이기 때문에 정교한 Spatial Information을 필요로 하기 때문에
 Mask branch는 작은 FCN의 구조를 사용합니다. 또한 RoI Feature를 얻기 위해 RoI Pooling이 아닌 RoI Align을 사용합니다.
 
-
 <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbaIK6t%2FbtqXb2NcBYr%2FR6vyWUUA9esdvRVzPnZimk%2Fimg.jpg" width="60%" height="60%" align="center">
 
 위 그림은 Mask branch에서 얻은 Mask를 표현합니다. 각 Class에 대한 Binary Mask를 출력하며 해당 픽셀이 해당 Class에 해당하는지 여부를 0과 1로 표시합니다. Mask Branch는 $K^2m$ Size의 feature map을 출력합니다. $m$은 Class의 Feature map size이며 $K$는 Class의 개수입니다.
+
 ## RoI Align
 
 <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Frn1zn%2FbtqBS6iJfmZ%2FhGQiZeuUGQNlSKhIuwdz8k%2Fimg.png" width="60%" height="60%" align="center">
