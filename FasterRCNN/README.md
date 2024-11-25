@@ -21,6 +21,16 @@ Box의 좌표에 대한 regression을 수행하기 위하여 1x1 convolution을 
 ROI Pooling의 목적은 size가 다른 region proposal을 FC layer의 입력으로 사용하기 위해 fixed size의 feature로 만들기 위하여 사용됩니다.
 Faster RCNN에서 사용한 ROI Pooling은 Fast RCNN에서 사용한 방법과 동일하며 사전 정의된 size의 grid를 이용하여 grid의 bin안에 들어가는 값 사이에 max pooling을 수행하여 fixed size의 feature vector를 만듭니다.
 
+## FPN (Feature Pyramid Network)
+
+<p align="center"><img src="https://github.com/user-attachments/assets/684569f2-29f2-4fa0-91cb-1549ce1cd2d0" width="50%" height="50%"></p>
+
+Faster RCNN 원 논문에서는 FPN (Feature Pyramid Network)을 사용하지 않지만 본 구현에서는 다양한 Backbone에서의 Faster RCNN의 성능을 평가하기 위해 사용합니다.
+FPN은 원본 이미지를 convolutional network에 입력하여 forward pass를 수행하고, 각 stage마다 서로 다른 scale을 가지는 4개의 feature map을 추출합니다.
+이 과정을 Bottom-up pathway라고 하며 이후 Top-down pathway를 통해 각 feature map에 1x1 conv 연산을 적용하여 모두 256 channel을 가지도록 rescale하고 upsampling을 수행합니다.
+마지막으로 Lateral connections 과정을 통해 pyramid level 바로 아래 있는 feature map과 element-wise addition 연산을 수행합니다. 이를 통해 4개의 서로 다른 resolution의 feature map에 3x3 conv 연산을 적용합니다.
+이러한 과정으로 FPN은 이미지에 존재하는 다양한 scale의 object를 더 잘 추출하며, 일반적인 backbone에 비해 detection 성능이 더욱 우수한 특징을 가지고 있습니다.
+
 # 2. Dataset Preparation
 데이터셋은 coco2017을 사용합니다. 아래의 명령어를 이용하여 데이터셋을 다운로드 해주세요.
 ```python
@@ -39,7 +49,13 @@ $ wget http://images.cocodataset.org/annotations/image_info_test2017.zip
     ├── train
     └── val
 ```
-annotations 폴더에는 train_annotations.json, val_annotations.json 파일을 위치시켜주세요. train, val 폴더에는 학습에 사용 할 이미지 파일이 있습니다.
+COCO 2017 dataset을 다운로드 받으면 annotations 정보는 아래와 같습니다.
+
+- captions_*.json : 이미지를 자연어로 설명하는 caption annotation
+- instances_*.json : 이미지의 object의 segmentation 및 bbox annotation
+- person_keypoints_*.json : 이미지내의 사람의 pose estimation을 위한 segmentation annotation
+
+이 구현에서는 Object Detection을 위하여 instances_*.json을 사용합니다. 자세한 사항은 coco_dataset.py를 참고해주세요.
 
 # 3. Train
 - 아래와 같은 명령어를 실행해주세요. args에 대한 자세한 내용은 코드를 참고해주세요
@@ -55,7 +71,15 @@ $ python train.py --[args]
 
 |모델|AP@IOU 0.50:0.95|AP@IOU 0.50|AP@IOU 0.75|
 |------|---|---|---|
-|VGG NoAug|0.348|0.487|0.380|
-|VGG Aug|0.339|0.474|0.366|
-|ResNet50FPN Aug|0.433|0.562|0.469|
+|VGG16|0.339|0.474|0.366|
+|ResNet50FPN|0.433|0.562|0.469|
 
+## Qualitative Evaluation
+
+### VGG16 Backbone
+
+<p align="center"><img src="https://github.com/user-attachments/assets/c48737c5-15ae-4c59-8cc3-40b58f031972" width="50%" height="50%"></p>
+
+### ResNet50FPN Backbone
+
+<p align="center"><img src="https://github.com/user-attachments/assets/ce597895-27e0-4f6b-ac94-45b7252f2592" width="50%" height="50%"></p>
