@@ -5,7 +5,13 @@
 딥러닝 프레임워크는 파이토치를 사용합니다.
 
 ## 2. Table of Contents
-- Faster RCNN : 2024.11.06 업데이트
-- Mask RCNN : 2024.11.06 업데이트
+- CNN Based
+  - 1-Stage Detector
+    - SSD (Single Short Detector)
+  - 2-Stage Detector
+    - Faster RCNN
+    - Mask RCNN
+- Transformer Based
 
-항목별 폴더에 들어가시면 각 모델에 대한 개념, 학습, 평가 및 추론 방법에 대한 자세한 내용이 작성되어 있습니다.
+## 3. Paper Reference
+
