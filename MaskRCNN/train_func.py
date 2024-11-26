@@ -48,34 +48,37 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
         model.train()
         train_t = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
         for i, (images, targets) in train_t:
-            images = list(image.to('cuda') for image in images)
-            targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
-
-            # calculate loss
-            loss_dict = model(images, targets)
-            losses = sum(loss for loss in loss_dict.values())
-
-            # update weight
-            optimizer.zero_grad()
-            losses.backward()
-            optimizer.step()
-
-            # adjust lr
-            global_step += 1
-            adjust_lr = lr_cosine_decay(args.lr, global_step, total_iter)
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = adjust_lr
-
-            # loss update
-            train_losses.update(losses.item())
-
-            # temp_stop_flag += 1
-            # if temp_stop_flag == 100:
-            #     break
-
-            # print tqdm
-            print_loss = round(losses.item(), 4)
-            train_t.set_postfix_str("Train loss : {}".format(print_loss))
+            try:
+                images = list(image.to('cuda') for image in images)
+                targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
+    
+                # calculate loss
+                loss_dict = model(images, targets)
+                losses = sum(loss for loss in loss_dict.values())
+    
+                # update weight
+                optimizer.zero_grad()
+                losses.backward()
+                optimizer.step()
+    
+                # adjust lr
+                global_step += 1
+                adjust_lr = lr_cosine_decay(args.lr, global_step, total_iter)
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = adjust_lr
+    
+                # loss update
+                train_losses.update(losses.item())
+    
+                # temp_stop_flag += 1
+                # if temp_stop_flag == 100:
+                #     break
+    
+                # print tqdm
+                print_loss = round(losses.item(), 4)
+                train_t.set_postfix_str("Train loss : {}".format(print_loss))
+            except:
+                print("Invalid Box Error so Ignore...")
             
         # Update learning rates schedule
         train_losses_avg.append(train_losses.avg)
@@ -85,18 +88,21 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
         val_t = tqdm(enumerate(val_dataloader), total=len(val_dataloader))
         with torch.no_grad():
             for i, (images, targets) in val_t:
-                images = list(image.to('cuda') for image in images)
-                targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
-                
-                loss_dict = model(images, targets)
-                losses = sum(loss for loss in loss_dict.values())
-    
-                # loss recording
-                val_losses.update(losses.item())
-    
-                # print tqdm
-                print_loss = round(losses.item(), 4)
-                val_t.set_postfix_str("Val loss : {}".format(print_loss))
+                try:
+                    images = list(image.to('cuda') for image in images)
+                    targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
+                    
+                    loss_dict = model(images, targets)
+                    losses = sum(loss for loss in loss_dict.values())
+        
+                    # loss recording
+                    val_losses.update(losses.item())
+        
+                    # print tqdm
+                    print_loss = round(losses.item(), 4)
+                    val_t.set_postfix_str("Val loss : {}".format(print_loss))
+                except:
+                    print("Invalid Box Error so Ignore...")
                 
         # loss recording
         val_losses_avg.append(val_losses.avg)
