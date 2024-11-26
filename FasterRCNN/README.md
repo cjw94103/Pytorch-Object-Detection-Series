@@ -76,6 +76,8 @@ $ python inference.py --[args]
 $ python evaluation.py --[args]
 ```
 
+학습된 모델의 box score는 아래와 같습니다.
+
 |모델|AP@IOU 0.50:0.95|AP@IOU 0.50|AP@IOU 0.75|
 |------|---|---|---|
 |VGG16|0.339|0.474|0.366|
