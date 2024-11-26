@@ -27,6 +27,9 @@ def lr_cosine_decay(base_learning_rate, global_step, decay_steps, alpha=0):
     return decayed_learning_rate
 
 def train(args, model, train_dataloader, val_dataloader, optimizer):
+
+    # for gradient clipping
+    max_norm = args.max_norm
     
     start_epoch = 0
     total_iter = len(train_dataloader) * args.epochs
@@ -35,8 +38,6 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
     
     train_losses_avg = []
     val_losses_avg = []
-
-    # temp_stop_flag = 0
 
     # Training
     for epoch in range(start_epoch, args.epochs):
@@ -47,56 +48,61 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
         # model train mode
         model.train()
         train_t = tqdm(enumerate(train_dataloader), total=len(train_dataloader))
-        for i, (images, targets) in train_t:
-            images = list(image.to('cuda') for image in images)
-            targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
-
-            # calculate loss
-            loss_dict = model(images, targets)
-            losses = sum(loss for loss in loss_dict.values())
-
-            # update weight
-            optimizer.zero_grad()
-            losses.backward()
-            optimizer.step()
-
-            # adjust lr
-            global_step += 1
-            adjust_lr = lr_cosine_decay(args.lr, global_step, total_iter)
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = adjust_lr
-
-            # loss update
-            train_losses.update(losses.item())
-
-            # temp_stop_flag += 1
-            # if temp_stop_flag == 100:
-            #     break
-
-            # print tqdm
-            print_loss = round(losses.item(), 4)
-            train_t.set_postfix_str("Train loss : {}".format(print_loss))
+        for i, (images, targets, image_id) in train_t:
+            try:
+                images = list(image.to('cuda') for image in images)
+                targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
+    
+                # calculate loss
+                loss_dict = model(images, targets)
+                losses = sum(loss for loss in loss_dict.values())
+    
+                # update weight
+                optimizer.zero_grad()
+                losses.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+                optimizer.step()
+    
+                # adjust lr
+                global_step += 1
+                adjust_lr = lr_cosine_decay(args.lr, global_step, total_iter)
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = adjust_lr
+    
+                # loss update
+                train_losses.update(losses.item())
+    
+                # print tqdm
+                print_loss = round(losses.item(), 4)
+                train_t.set_postfix_str("Train loss : {}".format(print_loss))
+                
+            except:
+                print("Invalid Box Error so Ignore...")
+                print(image_id)
             
         # Update learning rates schedule
         train_losses_avg.append(train_losses.avg)
 
         # Validation
-        # model.eval()
         val_t = tqdm(enumerate(val_dataloader), total=len(val_dataloader))
         with torch.no_grad():
-            for i, (images, targets) in val_t:
-                images = list(image.to('cuda') for image in images)
-                targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
-                
-                loss_dict = model(images, targets)
-                losses = sum(loss for loss in loss_dict.values())
-    
-                # loss recording
-                val_losses.update(losses.item())
-    
-                # print tqdm
-                print_loss = round(losses.item(), 4)
-                val_t.set_postfix_str("Val loss : {}".format(print_loss))
+            try:
+                for i, (images, targets, image_id) in val_t:
+                    images = list(image.to('cuda') for image in images)
+                    targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
+                    
+                    loss_dict = model(images, targets)
+                    losses = sum(loss for loss in loss_dict.values())
+        
+                    # loss recording
+                    val_losses.update(losses.item())
+        
+                    # print tqdm
+                    print_loss = round(losses.item(), 4)
+                    val_t.set_postfix_str("Val loss : {}".format(print_loss))
+            except:
+                print("Invalid Box Error so Ignore...")
+                print(image_id)
                 
         # loss recording
         val_losses_avg.append(val_losses.avg)
@@ -110,19 +116,7 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
             if val_avg_loss<minimum_val_loss:
                 print('improve val_loss!! so model save {} -> {}'.format(minimum_val_loss, val_avg_loss))
                 minimum_val_loss = val_avg_loss
-                if args.multi_gpu_flag == True:
-                    torch.save(model.module.state_dict(), args.model_save_path)
-                else:
-                    torch.save(model.state_dict(), args.model_save_path)
-                    
-        if args.save_per_epochs is not None:
-            if (epoch+1) % args.save_per_epochs == 0:
-                print("save per epochs {}".format(str(epoch+1)))
-                per_epoch_save_path = args.model_save_path.replace(".pth", '_' + str(epoch+1) + 'epochs.pth')
-                if args.multi_gpu_flag == True:
-                    torch.save(model.module.state_dict(), args.model_save_path)
-                else:
-                    torch.save(model.state_dict(), args.model_save_path)
+                torch.save(model.state_dict(), args.model_save_path)
 
         # save history
         save_history(train_losses_avg, val_losses_avg, save_path=args.model_save_path.replace('.pth', '.npy'))
