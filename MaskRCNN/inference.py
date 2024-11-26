@@ -8,13 +8,12 @@ from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from transform_util import Compose, RandomHorizontalFlip, PILToTensor, ToDtype, RandomPhotometricDistort
+from transform_utils import Compose, RandomHorizontalFlip, PILToTensor, ToDtype, RandomPhotometricDistort
 from coco_dataset import COCODataset
 from torch.utils.data import DataLoader
 
 from eval_utils.metric import get_inference_metrics_from_df, summarise_inference_metrics
 from eval_utils.coco_metric import get_coco_from_dfs
-# from eval_utils.seg_metric import SegmentationMetrics
 
 from utils import *
 from tqdm import tqdm
@@ -25,6 +24,7 @@ import matplotlib.pyplot as plt
 from torchvision.transforms.functional import to_pil_image
 from matplotlib import colormaps
 
+## draw function
 def draw_bbox(ax, box, box_color, text, color, mask):
     ax.add_patch(
         plt.Rectangle(
@@ -52,26 +52,26 @@ def draw_bbox(ax, box, box_color, text, color, mask):
     rgba = cmap(norm(mask))
     ax.imshow(rgba, interpolation="nearest", alpha=0.5)
 
-# argparse
+## argparse
 parser = argparse.ArgumentParser()
 
 ## prepare dataset
-parser.add_argument("--data_path", type=str, help="your custom dataset path", default="./data/coco2017/")
+parser.add_argument("--data_path", type=str, help="your custom dataset path", default="/data/02_COCOData/")
 
 ## data generator
 parser.add_argument("--num_workers", type=int, help="num workers of generator", default=0)
 parser.add_argument("--batch_size", type=int, help="num of batch size", default=4)
 
 ## model architecture
-parser.add_argument("--backbone", type=str, help="backbone of faster rcnn", default="resnet50fpn")
+parser.add_argument("--backbone", type=str, help="backbone of mask rcnn", default="resnet50fpn")
 parser.add_argument("--hidden_layer", type=int, help="feature map reduced dimension", default=256)
 
 ## Model save
-parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/02_Aug_VGG_Backbone/Augment_VGG_model.pth")
+parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/ResNet50FPN_backbone/MaskRCNN_ResNet50FPN_model.pth")
 
 args = parser.parse_args()
 
-# Make Datalaoder
+## make dataloader
 def collator(batch):
     return tuple(zip(*batch))
 
@@ -86,12 +86,11 @@ dataloader = DataLoader(
     dataset, batch_size=1, shuffle=False, drop_last=True, collate_fn=collator, num_workers=args.num_workers
 )
 
-# load trained model
+## load trained model
 device = "cuda" if torch.cuda.is_available() else "cpu"
 num_classes = len(dataset.new_categories)
 
-weights_path = args.model_save_path
-weights = torch.load(weights_path)
+weights = torch.load(args.model_save_path)
 
 if args.backbone == 'resnet50fpn':
     model = maskrcnn_resnet50_fpn(pretrained_backbone=True) # imagenet pretrained
@@ -105,11 +104,11 @@ if args.backbone == 'resnet50fpn':
         num_classes=num_classes
     )
 
-model = model.load_state_dict(weights)
-model = model.to(device)
+model.load_state_dict(weights)
+model.to(device)
 model.eval()
 
-# inference (for one image, example code)
+## inference
 _cate_dict = dataset.new_categories
 cate_dict = {}
 for key, value in _cate_dict.items():
@@ -121,7 +120,7 @@ color_names = list(colormaps)
 for i in range(len(list(cate_dict.keys()))):
     color_dict[i] = color_names[i]
 
-se_idx = -1400
+se_idx = 700
 threshold = 0.5
 
 with torch.no_grad():
@@ -147,9 +146,20 @@ with torch.no_grad():
     gtmasks = target['masks'].numpy()
     gtlabels = target["labels"].numpy()
 
+## visualization gt image
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(1, 1, 1)
 plt.imshow(to_pil_image(image[0]))
+for box, mask, label in zip(gtboxes, gtmasks, gtlabels):
+    draw_bbox(ax, box, 'purple', f"{cate_dict[label]}", color_dict[label], mask)
+    plt.xticks(ticks= [])
+    plt.yticks(ticks= [])
 
+## visualization pred image
+fig = plt.figure(figsize=(8, 8))
+ax = fig.add_subplot(1, 1, 1)
+plt.imshow(to_pil_image(image[0]))
 for box, mask, label in zip(boxes, masks, labels):
     draw_bbox(ax, box, 'red', f"{cate_dict[label]}", color_dict[label], mask)
+    plt.xticks(ticks= [])
+    plt.yticks(ticks= [])
