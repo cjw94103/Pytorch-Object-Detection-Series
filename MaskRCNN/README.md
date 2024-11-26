@@ -67,7 +67,12 @@ $ python inference.py --[args]
 
 # 5. 학습 결과
 ## Quantitative Evaluation
-모델은 Box Score와 Mask Score를 측정합니다. 현재 시점 (2024/06/05)에는 Mask Score를 구현하지 못하였습니다. (추후 구현 예정) 따라서 Box Score를 AP@IOU 0.50:0.95, AP@IOU 0.50, AP@IOU 0.75로 측정합니다.
+모델은 Box Score와 Mask Score를 측정합니다. 현재 시점 (2024/11/26)에는 Mask Score를 구현하지 못하였습니다. (추후 구현 예정) 따라서 Box Score를 AP@IOU 0.50:0.95, AP@IOU 0.50, AP@IOU 0.75로 측정합니다.
+평가를 위해 아래와 같은 명령어를 사용해주세요. args에 대한 자세한 정보는 evaluation.py 코드를 참고해주세요.
+```python
+$ python evaluation.py --[args]
+```
+학습된 모델의 box score는 아래와 같습니다.
 
 |모델|AP@IOU 0.50:0.95|AP@IOU 0.50|AP@IOU 0.75|
 |------|---|---|---|
