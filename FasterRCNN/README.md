@@ -58,16 +58,23 @@ COCO 2017 dataset을 다운로드 받으면 annotations 정보는 아래와 같�
 이 구현에서는 Object Detection을 위하여 instances_*.json을 사용합니다. 자세한 사항은 coco_dataset.py를 참고해주세요.
 
 # 3. Train
-- 아래와 같은 명령어를 실행해주세요. args에 대한 자세한 내용은 코드를 참고해주세요
+- 아래와 같은 명령어를 실행해주세요. args에 대한 자세한 내용은 train.py를 참고해주세요.
 ```python
 $ python train.py --[args]
 ```
-# 4. Inference and Evaluation
-학습이 완료되면 inference.py를 이용하여 추론을 수행할 수 있습니다.
+# 4. Inference
+학습이 완료되면 inference.py를 이용하여 추론을 수행할 수 있습니다. args에 대한 자세한 내용은 inference.py를 참고해주세요.
+```python
+$ python inference.py --[args]
+```
 
 # 5. 학습결과
 ## Quantitative Evaluation
 각 모델은 validation dataset에 대하여 AP@IOU 0.50:0.95, AP@IOU 0.50, AP@IOU 0.75을 정량적 평가 메트릭으로 사용합니다.
+아래와 같은 명령어로 Quantitative Evaluation을 수행할 수 있습니다. args에 대한 자세한 내용은 evaluation.py를 참고해주세요.
+```python
+$ python evaluation.py --[args]
+```
 
 |모델|AP@IOU 0.50:0.95|AP@IOU 0.50|AP@IOU 0.75|
 |------|---|---|---|
