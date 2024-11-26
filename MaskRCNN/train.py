@@ -1,6 +1,3 @@
-import os
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
-
 import torch
 import numpy as np
 import argparse
@@ -10,25 +7,26 @@ from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from transform_util import Compose, RandomHorizontalFlip, PILToTensor, ToDtype, RandomPhotometricDistort
+from transform_utils import Compose, RandomHorizontalFlip, PILToTensor, ToDtype, RandomPhotometricDistort
 from coco_dataset import COCODataset
 from torch.utils.data import DataLoader
 
 from utils import *
 from train_func import train
 
+## argparse
 # argparse
 parser = argparse.ArgumentParser()
 
 ## prepare dataset
-parser.add_argument("--data_path", type=str, help="your custom dataset path", default="./data/coco2017/")
+parser.add_argument("--data_path", type=str, help="your custom dataset path", default="/data/02_COCOData/")
 
 ## data generator
 parser.add_argument("--num_workers", type=int, help="num workers of generator", default=0)
 parser.add_argument("--batch_size", type=int, help="num of batch size", default=4)
 
 ## model architecture
-parser.add_argument("--backbone", type=str, help="backbone of faster rcnn", default="resnet50fpn")
+parser.add_argument("--backbone", type=str, help="backbone of mask rcnn", default="resnet50fpn")
 parser.add_argument("--hidden_layer", type=int, help="feature map reduced dimension", default=256)
 
 ## Learning Parameter
@@ -36,7 +34,7 @@ parser.add_argument("--epochs", type=int, help="num epochs", default=20)
 
 ## Model save
 parser.add_argument("--monitor", type=str, help="Criteria of Best model save", default="loss")
-parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/02_Aug_VGG_Backbone/Augment_VGG_model.pth")
+parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/ResNet50FPN_backbone/MaskRCNN_ResNet50FPN_model.pth")
 
 ## Optimizer parameter
 parser.add_argument("--weight_decay", type=float, help="weight decay SGD Optimizer", default=1e-4)
@@ -45,7 +43,7 @@ parser.add_argument("--lr", type=float, help="learning rate", default=0.001)
 
 args = parser.parse_args()
 
-# DataLoader
+## make dataloader
 def collator(batch):
     return tuple(zip(*batch))
 
@@ -74,7 +72,7 @@ val_dataloader = DataLoader(
     val_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True, collate_fn=collator, num_workers=args.num_workers
 )
 
-# Model
+## make model instance
 device = "cuda" if torch.cuda.is_available() else "cpu"
 num_classes = len(train_dataset.new_categories)
 
@@ -91,9 +89,9 @@ if args.backbone == 'resnet50fpn':
     )
     model.to(device)   
 
-# Optimizer
+## get optimizer
 params = [p for p in model.parameters() if p.requires_grad]
 optimizer = optim.SGD(params, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
-# Train
+## Train!!
 train(args, model, train_dataloader, val_dataloader, optimizer)
