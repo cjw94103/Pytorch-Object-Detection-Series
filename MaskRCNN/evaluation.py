@@ -8,22 +8,21 @@ from torchvision.models.detection import maskrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from transform_util import Compose, RandomHorizontalFlip, PILToTensor, ToDtype, RandomPhotometricDistort
+from transform_utils import Compose, RandomHorizontalFlip, PILToTensor, ToDtype, RandomPhotometricDistort
 from coco_dataset import COCODataset
 from torch.utils.data import DataLoader
 
 from eval_utils.metric import get_inference_metrics_from_df, summarise_inference_metrics
 from eval_utils.coco_metric import get_coco_from_dfs
-# from eval_utils.seg_metric import SegmentationMetrics
 
 from utils import *
 from tqdm import tqdm
 
-# argparse
+## argparse
 parser = argparse.ArgumentParser()
 
 ## prepare dataset
-parser.add_argument("--data_path", type=str, help="your custom dataset path", default="./data/coco2017/")
+parser.add_argument("--data_path", type=str, help="your custom dataset path", default="/data/02_COCOData/")
 
 ## data generator
 parser.add_argument("--num_workers", type=int, help="num workers of generator", default=0)
@@ -34,11 +33,11 @@ parser.add_argument("--backbone", type=str, help="backbone of faster rcnn", defa
 parser.add_argument("--hidden_layer", type=int, help="feature map reduced dimension", default=256)
 
 ## Model save
-parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/02_Aug_VGG_Backbone/Augment_VGG_model.pth")
+parser.add_argument("--model_save_path", type=str, help="your model save path", default="./model_result/ResNet50FPN_backbone/MaskRCNN_ResNet50FPN_model.pth")
 
 args = parser.parse_args()
 
-# Make Datalaoder
+## make dataloader
 def collator(batch):
     return tuple(zip(*batch))
 
@@ -53,7 +52,7 @@ dataloader = DataLoader(
     dataset, batch_size=1, shuffle=False, drop_last=True, collate_fn=collator, num_workers=args.num_workers
 )
 
-# load trained model
+## load trained model
 device = "cuda" if torch.cuda.is_available() else "cpu"
 num_classes = len(dataset.new_categories)
 
@@ -72,11 +71,11 @@ if args.backbone == 'resnet50fpn':
         num_classes=num_classes
     )
 
-model = model.load_state_dict(weights)
-model = model.to(device)
+model.load_state_dict(weights)
+model.to(device)
 model.eval()
 
-# Evaluation
+## evaluation
 _cate_dict = dataset.new_categories
 cate_dict = {}
 for key, value in _cate_dict.items():
@@ -85,9 +84,6 @@ for key, value in _cate_dict.items():
 gt_lists = []
 pred_lists = []
 stop_flag = 0
-
-# pred_mask_list = []
-# gt_mask_list = []
 
 with torch.no_grad():
     model.eval()
@@ -134,8 +130,7 @@ with torch.no_grad():
             gt_list = [x_min, y_min, x_max, y_max, cate_dict[gt_label], filename]
             gt_lists.append(gt_list)
 
-
-# make dataframe
+## make score dataframe
 gt_lists = np.array(gt_lists)
 pred_lists = np.array(pred_lists)
 
@@ -156,5 +151,6 @@ labels_df['ymax'] = np.array(gt_lists[:,3], dtype=np.float32)
 labels_df['label'] = gt_lists[:,4]
 labels_df['image_name'] = gt_lists[:,5]
 
-# box score
+## box score
 res = get_coco_from_dfs(preds_df, labels_df, False)
+print(res)
