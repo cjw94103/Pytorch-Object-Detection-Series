@@ -11,11 +11,10 @@ from tqdm import tqdm
 class COCODataset(Dataset):
     def __init__(self, root, train, transform=None):
         super().__init__()
-        self.directory = "train" if train else "val"
-        annotations = os.path.join(root, "annotations", f"{self.directory}_annotations.json")
+        self.directory = "train2017" if train else "val2017"
+        annotations = os.path.join(root, "annotations", f"instances_{self.directory}.json")
         
         self.coco = COCO(annotations)
-        # self.id_list = 
         self.root = root
         self.transform = transform
         self.categories = self._get_categories()
@@ -25,9 +24,9 @@ class COCODataset(Dataset):
         for i in range(len(self.categories)):
             self.new_categories[list(self.categories.values())[i]] = i
 
-        if self.directory == 'train':
+        if self.directory == 'train2017':
             self.id_list = list(np.load('./except_data_list/train_list.npy').astype(np.int32))
-        elif self.directory == 'val':
+        elif self.directory == 'val2017':
             self.id_list = list(np.load('./except_data_list/val_list.npy').astype(np.int32))
 
     def _get_categories(self):
