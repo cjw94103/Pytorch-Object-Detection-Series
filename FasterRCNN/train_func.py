@@ -86,8 +86,8 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
         # Validation
         val_t = tqdm(enumerate(val_dataloader), total=len(val_dataloader))
         with torch.no_grad():
-            try:
-                for i, (images, targets, image_id) in val_t:
+            for i, (images, targets, image_id) in val_t:
+                try:
                     images = list(image.to('cuda') for image in images)
                     targets = [{k: v.to('cuda') for k, v in t.items()} for t in targets]
                     
@@ -100,9 +100,9 @@ def train(args, model, train_dataloader, val_dataloader, optimizer):
                     # print tqdm
                     print_loss = round(losses.item(), 4)
                     val_t.set_postfix_str("Val loss : {}".format(print_loss))
-            except:
-                print("Invalid Box Error so Ignore...")
-                print(image_id)
+                except:
+                    print("Invalid Box Error so Ignore...")
+                    print(image_id)
                 
         # loss recording
         val_losses_avg.append(val_losses.avg)
