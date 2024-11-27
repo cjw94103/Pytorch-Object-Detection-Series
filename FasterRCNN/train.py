@@ -113,7 +113,7 @@ if args.backbone == 'vgg16':
     
 elif args.backbone == 'resnet50fpn':
     backbone = resnet_fpn_backbone('resnet50', pretrained=True)
-    model = FasterRCNN(backbone, num_classes=len(train_dataset._get_categories())).to(device)
+    model = FasterRCNN(backbone, num_classes=len(train_dataset.new_categories)).to(device)
 
 ## get optimizer
 params = [p for p in model.parameters() if p.requires_grad]
