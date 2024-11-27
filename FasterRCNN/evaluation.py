@@ -75,7 +75,7 @@ if args.backbone == 'vgg16':
     roi_pooler = ops.MultiScaleRoIAlign(featmap_names=["0"], output_size=args.pooler_output_size, sampling_ratio=args.pooler_sampling_ratio)
 
     model = FasterRCNN(backbone=backbone, 
-                       num_classes=len(val_dataset._get_categories()), 
+                       num_classes=len(val_dataset.new_categories), 
                        rpn_anchor_generator=anchor_generator, 
                        box_roi_pool=roi_pooler ).to("cuda")
     
@@ -84,7 +84,7 @@ if args.backbone == 'vgg16':
     
 elif args.backbone == 'resnet50fpn':
     backbone = resnet_fpn_backbone('resnet50', pretrained=True)
-    model = FasterRCNN(backbone, num_classes=len(val_dataset._get_categories())).to("cuda")
+    model = FasterRCNN(backbone, num_classes=len(val_dataset.new_categories)).to("cuda")
     
     model.load_state_dict(weigths)
     model.eval()
