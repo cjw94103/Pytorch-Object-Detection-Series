@@ -107,7 +107,7 @@ if args.backbone == 'vgg16':
     roi_pooler = ops.MultiScaleRoIAlign(featmap_names=["0"], output_size=args.pooler_output_size, sampling_ratio=args.pooler_sampling_ratio)
 
     model = FasterRCNN(backbone=backbone, 
-                       num_classes=len(train_dataset._get_categories()), 
+                       num_classes=len(train_dataset.new_categories), 
                        rpn_anchor_generator=anchor_generator, 
                        box_roi_pool=roi_pooler ).to(device)
     
