@@ -46,8 +46,8 @@ $ wget http://images.cocodataset.org/annotations/image_info_test2017.zip
 ```python
 └── coco2017
     ├── annotations
-    ├── train
-    └── val
+    ├── train2017
+    └── val2017
 ```
 COCO 2017 dataset을 다운로드 받으면 annotations 정보는 아래와 같습니다.
 
