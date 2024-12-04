@@ -8,6 +8,7 @@
 - CNN Based
   - 1-Stage Detector
     - SSD (Single Short Detector)
+    - RetinaNet
   - 2-Stage Detector
     - Faster RCNN
     - Mask RCNN
